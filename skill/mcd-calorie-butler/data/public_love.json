@@ -1,0 +1,14 @@
+{
+  "default": 6.0,
+  "source": "麦购网「麦当劳十大最受欢迎产品」综合指数（https://www.maigoo.com/top/424487.html，2026-10-13 查阅）。该指数汇总大众点评、美团、饿了么的评价与热销情况，算法未公开，只作为默认起点，换算为 10 分制（÷10，保留一位小数）。榜单外的餐品默认 6.0。",
+  "rules": [
+    {"match": "contains", "pattern": "薯条", "love": 9.2, "from": "薯条 91.6"},
+    {"match": "prefix", "pattern": "麦辣鸡翅", "love": 9.1, "from": "麦辣鸡翅 90.5"},
+    {"match": "exact", "pattern": "巨无霸", "love": 8.9, "from": "巨无霸汉堡 88.7"},
+    {"match": "contains", "pattern": "麦旋风", "love": 8.7, "from": "麦旋风 87.1"},
+    {"match": "prefix", "pattern": "麦乐鸡", "love": 8.4, "from": "麦乐鸡 84.3"},
+    {"match": "exact", "pattern": "圆筒冰淇淋", "love": 8.3, "from": "圆筒冰淇淋 82.9"},
+    {"match": "exact", "pattern": "麦辣鸡腿汉堡", "love": 8.1, "from": "麦辣鸡腿汉堡 81.3"},
+    {"match": "prefix", "pattern": "麦麦脆汁鸡", "love": 8.0, "from": "麦麦脆汁鸡 79.7"}
+  ]
+}

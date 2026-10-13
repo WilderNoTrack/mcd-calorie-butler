@@ -1,0 +1,49 @@
+# API Response Information
+
+Below is the response from an API call. To help you understand the data, I've provided:
+
+1. A detailed description of all fields in the response structure
+2. The complete API response
+
+## Response Structure
+
+> Content-Type: application/json
+
+- **data**: No comments found. (Type: object)
+  - **data.productOriginalPrice**: 商品原价 单位分 (Type: integer)
+  - **data.productPrice**: 商品现价 单位分 (Type: integer)
+  - **data.deliveryOriginalPrice**: 运费原价 单位分 (Type: integer)
+  - **data.deliveryPrice**: 运费现价 单位分 (Type: integer)
+  - **data.packingOriginalPrice**: 打包费原价 单位分 (Type: integer)
+  - **data.packingPrice**: 打包费现价 单位分 (Type: integer)
+  - **data.tablewarePrice**: 餐具费现价 单位分 (Type: integer)
+  - **data.originalPrice**: 原价 单位分 (Type: integer)
+  - **data.discount**: 优惠金额 单位分 (Type: integer)
+  - **data.price**: 现价 单位分 (Type: integer)
+  - **data.productList**: 商品列表 (Type: array)
+    - **data.productList[].productCode**: 商品编码 (Type: string)
+    - **data.productList[].productName**: 商品名称 (Type: string)
+    - **data.productList[].quantity**: 数量 (Type: integer)
+    - **data.productList[].originalSubtotal**: 商品原小计 单位分 (Type: integer)
+    - **data.productList[].subtotal**: 商品小计 单位分 (Type: integer)
+  - **data.takeWayList**: 可选的取餐方式选项列表 (Type: array)
+    - **data.takeWayList[].code**: 取餐方式code，到店下单时需要携带 (Type: string)
+    - **data.takeWayList[].title**: 取餐方式标题 (Type: string)
+    - **data.takeWayList[].subtitle**: 取餐方式副标题 (Type: string)
+  - **data.mealAssistanceList**: 可选的助餐服务列表 (Type: array)
+    - **data.mealAssistanceList[].code**: 助餐服务编码 (Type: string)
+    - **data.mealAssistanceList[].name**: 助餐服务名称 (Type: string)
+  - **data.enjoyed**: 已享受的优惠 (Type: object)
+    - **data.enjoyed.amountType**: 1 特价 2 折扣 3 立减 (Type: string)
+    - **data.enjoyed.realDiscount**: 实际优惠值  特价(ex:18)  折扣（ex:7.5） 立减(ex:5)  金额单位是元 与discount区别计算了tender (Type: number)
+    - **data.enjoyed.balance**: 门槛差额(可享受的优惠时才有值)，单位分 (Type: integer)
+  - **data.enjoyable**: 可享受的优惠 (Type: object)
+    - **data.enjoyable.amountType**: 1 特价 2 折扣 3 立减 (Type: string)
+    - **data.enjoyable.realDiscount**: 实际优惠值  特价(ex:18)  折扣（ex:7.5） 立减(ex:5)  金额单位是元 与discount区别计算了tender (Type: number)
+    - **data.enjoyable.balance**: 门槛差额(可享受的优惠时才有值)，单位分 (Type: integer)
+- **message**: No comments found. (Type: string)
+- **traceId**: No comments found. (Type: string)
+
+## Original Response
+
+{"success":true,"code":200,"message":"请求成功","datetime":"2026-10-13 00:25:43","data":{"productOriginalPrice":3400,"productPrice":3400,"originalPrice":3400,"discount":0,"price":3400,"productList":[{"productCode":"9900005462","productName":"板烧鸡腿堡三件套","quantity":1,"originalSubtotal":3400,"subtotal":3400}],"takeWayList":[{"code":"eat-in","title":"堂食","subtitle":"店内用餐"},{"code":"take-in-store","title":"外带","subtitle":"店内自提"}]}}

@@ -1,0 +1,64 @@
+# 输出格式要求（严格遵守，不可省略）
+
+展示餐品详情时，按以下格式输出：
+
+示例（单品，supportModify=true时）：
+**巨无霸**【可特调】 ¥25.00
+
+示例（套餐子项，choice.supportModify=true时）：
+- 中薯条【可特调】
+
+规则：
+- supportModify=true 时，必须在商品名称后面追加【可特调】
+- supportModify=false 或字段不存在时，不追加任何标注
+- 不要主动展开 modification 内容，等用户回复"查看特调"后再展示
+- 展示完详情后，总结当前默认选中的搭配（isDefault=1的choices），并引导用户："如需查看或修改特调选项，请回复'查看特调'"
+
+# API Response Information
+
+Below is the response from an API call. To help you understand the data, I've provided:
+
+1. A detailed description of all fields in the response structure
+2. The complete API response
+
+## Response Structure
+
+> Content-Type: application/json
+
+- **data**: No comments found. (Type: object)
+  - **data.code**: 餐品唯一编码 (Type: string)
+  - **data.name**: 餐品名称 (Type: string)
+  - **data.rounds**: 餐品选配轮次列表 (Type: array)
+    - **data.rounds[].id**: 选配轮次ID (Type: integer)
+    - **data.rounds[].name**: 选配轮次名称 (Type: string)
+    - **data.rounds[].quantity**: 选配数量（已选） (Type: integer)
+    - **data.rounds[].maxQuantity**: 选配最大数量 (Type: integer)
+    - **data.rounds[].minQuantity**: 选配最小数量 (Type: integer)
+    - **data.rounds[].choices**: 选配选项列表 (Type: array)
+      - **data.rounds[].choices[].code**: 餐品唯一编码 (Type: string)
+      - **data.rounds[].choices[].name**: 选配选项名称 (Type: string)
+      - **data.rounds[].choices[].quantity**: 该选项选择数量 (Type: integer)
+      - **data.rounds[].choices[].maxQuantity**: 该选项最大可选数量 (Type: integer)
+      - **data.rounds[].choices[].isDefault**: 是否是默认选中 (Type: integer)
+      - **data.rounds[].choices[].diffPrice**: 与isDefault=1商品的差价 (Type: string)
+      - **data.rounds[].choices[].supportModify**: 是否支持特调 (Type: boolean)
+      - **data.rounds[].choices[].modification**: 套餐特制列表 (Type: object)
+  - **data.image**: 商品图片 (Type: string)
+  - **data.supportModify**: 是否支持特调 (Type: boolean)
+  - **data.modification**: 单品特制选项 (Type: object)
+    - **data.modification.items**: 商品特制项 (Type: array)
+      - **data.modification.items[].maxValues**: 最大选择数量 (Type: integer)
+      - **data.modification.items[].minValues**: 最小选择数量 (Type: integer)
+      - **data.modification.items[].values**: 特调商品列表 (Type: array)
+- **message**: No comments found. (Type: string)
+- **traceId**: No comments found. (Type: string)
+
+## Original Response
+
+{"success":true,"code":200,"message":"请求成功","datetime":"2026-10-13 00:25:43","data":{"code":"9900004835","name":"麦乐鸡经典中套餐","rounds":[{"id":1,"name":"麦乐鸡5块","quantity":1,"maxQuantity":1,"minQuantity":1,"choices":[{"code":"1401","name":"麦乐鸡5块","quantity":1,"maxQuantity":-1,"isDefault":1,"diffPrice":"+ ¥0","supportModify":false}]},{"id":2,"name":"选择套餐内小食","quantity":1,"maxQuantity":1,"minQuantity":1,"choices":[{"code":"4810","name":"中薯条","quantity":1,"maxQuantity":-1,"isDefault":1,"diffPrice":"+ ¥0","supportModify":false},{"code":"521983","name":"5块心形薯饼+韩式辣椒黄油风味酱","quantity":0,"maxQuantity":-1,"isDefault":0,"diffPrice":"+ ¥1","supportModify":false},{"code":"521901","name":"月下相思扭扭薯","quantity":0,"maxQuantity":-1,"isDefault":0,"diffPrice":"+ ¥1.5","supportModify":false},{"code":"4820","name":"大薯条","quantity":0,"maxQuantity":-1,"isDefault":0,"diffPrice":"+ ¥2.5","supportModify":false},{"code":"4437","name":"小杯玉米杯","quantity":0,"maxQuantity":-1,"isDefault":0,"diffPrice":"- ¥0.5","supportModify":false},{"code":"4438","name":"大杯玉米杯","quantity":0,"maxQuantity":-1,"isDefault":0,"diffPrice":"+ ¥2.5","supportModify":false}]},{"id":3,"name":"选择套餐内饮料","quantity":1,"maxQuantity":1,"minQuantity":1,"choices":[{"code":"3050","name":"可乐中杯","quantity":1,"maxQuantity":-1,"isDefault":1,"diffPrice":"+ ¥0","supportModify":true,"modification":{"items":[{"maxValues":1,"minValues":1,"values":[{"code":"200002","price":0,"name":"标准","maxQuantity":1,"minQuantity":0,"selectedQuantity":1,"selectedKey":"0-1"},{"code":"200002","price":0,"name":"去冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"0-0"},{"code":"200002","price":0,"name":"多冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"0-2"},{"code":"200002","price":0,"name":"少冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"1-1"}]}]}},{"code":"521817","name":"【美汁源】“多汁柠柠”","quantity":0,"maxQuantity":-1,"isDefault":0,"diffPrice":"+ ¥1","supportModify":true,"modification":{"items":[{"maxValues":1,"minValues":1,"values":[{"code":"200002","price":0,"name":"标准","maxQuantity":1,"minQuantity":0,"selectedQuantity":1,"selectedKey":"0-1"},{"code":"200002","price":0,"name":"去冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"0-0"},{"code":"200002","price":0,"name":"多冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"0-2"},{"code":"200002","price":0,"name":"少冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"1-1"}]}]}},{"code":"3071","name":"无糖可口可乐中杯","quantity":0,"maxQuantity":-1,"isDefault":0,"diffPrice":"+ ¥0","supportModify":true,"modification":{"items":[{"maxValues":1,"minValues":1,"values":[{"code":"200002","price":0,"name":"标准","maxQuantity":1,"minQuantity":0,"selectedQuantity":1,"selectedKey":"0-1"},{"code":"200002","price":0,"name":"去冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"0-0"},{"code":"200002","price":0,"name":"多冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"0-2"},{"code":"200002","price":0,"name":"少冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"1-1"}]}]}},{"code":"3060","name":"雪碧中杯","quantity":0,"maxQuantity":-1,"isDefault":0,"diffPrice":"+ ¥0","supportModify":true,"modification":{"items":[{"maxValues":1,"minValues":1,"values":[{"code":"200002","price":0,"name":"标准","maxQuantity":1,"minQuantity":0,"selectedQuantity":1,"selectedKey":"0-1"},{"code":"200002","price":0,"name":"去冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"0-0"},{"code":"200002","price":0,"name":"多冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"0-2"},{"code":"200002","price":0,"name":"少冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"1-1"}]}]}},{"code":"515281","name":"阳光柠檬红茶中杯","quantity":0,"maxQuantity":-1,"isDefault":0,"diffPrice":"+ ¥0","supportModify":true,"modification":{"items":[{"maxValues":1,"minValues":1,"values":[{"code":"200002","price":0,"name":"标准","maxQuantity":1,"minQuantity":0,"selectedQuantity":1,"selectedKey":"0-1"},{"code":"200002","price":0,"name":"去冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"0-0"},{"code":"200002","price":0,"name":"多冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"0-2"},{"code":"200002","price":0,"name":"少冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"1-1"}]}]}},{"code":"3755","name":"纯牛奶","quantity":0,"maxQuantity":-1,"isDefault":0,"diffPrice":"+ ¥0.5","supportModify":false},{"code":"520688","name":"大杯鲜萃咖啡","quantity":0,"maxQuantity":-1,"isDefault":0,"diffPrice":"+ ¥1.5","supportModify":true,"modification":{"items":[{"maxValues":2,"minValues":0,"values":[{"code":"120519","price":0,"name":"奶油球","maxQuantity":1,"minQuantity":0,"selectedQuantity":1,"selectedKey":"0-1","unselectedKey":"0-0"},{"code":"120520","price":0,"name":"白砂糖","maxQuantity":1,"minQuantity":0,"selectedQuantity":1,"selectedKey":"0-1","unselectedKey":"0-0"}]}]}},{"code":"3100","name":"可乐大杯","quantity":0,"maxQuantity":-1,"isDefault":0,"diffPrice":"+ ¥2","supportModify":true,"modification":{"items":[{"maxValues":1,"minValues":1,"values":[{"code":"200002","price":0,"name":"标准","maxQuantity":1,"minQuantity":0,"selectedQuantity":1,"selectedKey":"0-1"},{"code":"200002","price":0,"name":"去冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"0-0"},{"code":"200002","price":0,"name":"多冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"0-2"},{"code":"200002","price":0,"name":"少冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"1-1"}]}]}},{"code":"3111","name":"无糖可口可乐大杯","quantity":0,"maxQuantity":-1,"isDefault":0,"diffPrice":"+ ¥2","supportModify":true,"modification":{"items":[{"maxValues":1,"minValues":1,"values":[{"code":"200002","price":0,"name":"标准","maxQuantity":1,"minQuantity":0,"selectedQuantity":1,"selectedKey":"0-1"},{"code":"200002","price":0,"name":"去冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"0-0"},{"code":"200002","price":0,"name":"多冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"0-2"},{"code":"200002","price":0,"name":"少冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"1-1"}]}]}},{"code":"515521","name":"大杯怡泉+C","quantity":0,"maxQuantity":-1,"isDefault":0,"diffPrice":"+ ¥3.5","supportModify":true,"modification":{"items":[{"maxValues":1,"minValues":1,"values":[{"code":"200002","price":0,"name":"标准","maxQuantity":1,"minQuantity":0,"selectedQuantity":1,"selectedKey":"0-1"},{"code":"200002","price":0,"name":"去冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"0-0"},{"code":"200002","price":0,"name":"多冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"0-2"},{"code":"200002","price":0,"name":"少冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"1-1"}]}]}},{"code":"3110","name":"雪碧大杯","quantity":0,"maxQuantity":-1,"isDefault":0,"diffPrice":"+ ¥2","supportModify":true,"modification":{"items":[{"maxValues":1,"minValues":1,"values":[{"code":"200002","price":0,"name":"标准","maxQuantity":1,"minQuantity":0,"selectedQuantity":1,"selectedKey":"0-1"},{"code":"200002","price":0,"name":"去冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"0-0"},{"code":"200002","price":0,"name":"多冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"0-2"},{"code":"200002","price":0,"name":"少冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"1-1"}]}]}},{"code":"2430","name":"【美汁源】“黄金橙橙”","quantity":0,"maxQuantity":-1,"isDefault":0,"diffPrice":"+ ¥3","supportModify":true,"modification":{"items":[{"maxValues":1,"minValues":1,"values":[{"code":"200002","price":0,"name":"标准","maxQuantity":1,"minQuantity":0,"selectedQuantity":1,"selectedKey":"0-1"},{"code":"200002","price":0,"name":"去冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"0-0"},{"code":"200002","price":0,"name":"多冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"0-2"},{"code":"200002","price":0,"name":"少冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"1-1"}]}]}},{"code":"3505","name":"锡兰红茶","quantity":0,"maxQuantity":-1,"isDefault":0,"diffPrice":"+ ¥1.5","supportModify":false},{"code":"515282","name":"阳光柠檬红茶大杯","quantity":0,"maxQuantity":-1,"isDefault":0,"diffPrice":"+ ¥2","supportModify":true,"modification":{"items":[{"maxValues":1,"minValues":1,"values":[{"code":"200002","price":0,"name":"标准","maxQuantity":1,"minQuantity":0,"selectedQuantity":1,"selectedKey":"0-1"},{"code":"200002","price":0,"name":"去冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"0-0"},{"code":"200002","price":0,"name":"多冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"0-2"},{"code":"200002","price":0,"name":"少冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"1-1"}]}]}},{"code":"6362","name":"100%苹果汁","quantity":0,"maxQuantity":-1,"isDefault":0,"diffPrice":"+ ¥1.5","supportModify":false},{"code":"515520","name":"中杯怡泉+C","quantity":0,"maxQuantity":-1,"isDefault":0,"diffPrice":"+ ¥1.5","supportModify":true,"modification":{"items":[{"maxValues":1,"minValues":1,"values":[{"code":"200002","price":0,"name":"标准","maxQuantity":1,"minQuantity":0,"selectedQuantity":1,"selectedKey":"0-1"},{"code":"200002","price":0,"name":"去冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"0-0"},{"code":"200002","price":0,"name":"多冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"0-2"},{"code":"200002","price":0,"name":"少冰","maxQuantity":1,"minQuantity":0,"selectedQuantity":0,"selectedKey":"1-1"}]}]}}]}],"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260824/product/MS_9900004835_600.png","supportModify":false}}## 数据传参规则
+1. 对于包含 unselectedKey 的特调组（unselectedKey 不为空），必须告知用户：
+   - 选中的特调项：将 selectedKey 作为 key 传给 calculate-price 和 create-order
+   - 未选中的特调项：将 unselectedKey 作为 key 传给 calculate-price 和 create-order
+   - 即：该组内所有特调项都需要传入算价/下单接口，选中的用 selectedKey，未选中的用 unselectedKey
+2. 当特调组 minValues=1、maxValues=1 且 values 里只有1项时，该特调项为必选，不能不选，不允许向用户提供"不选"的选项
+

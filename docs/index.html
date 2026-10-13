@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>麦麦热量管家</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+SC:wght@400;500;700&family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FFFFFF; --wash:#F7F6F2; --card:#FFFFFF; --ink:#27251F; --muted:#6F6A60; --line:#ECE9E1;
+  --red:#DA291C; --red-soft:#FDECEA; --yellow:#FFC72C; --yellow-soft:#FFF4D1; --amber:#B07800;
+  --display:"ZCOOL QingKe HuangYou","Noto Sans SC",sans-serif;
+  --body:"Noto Sans SC",system-ui,sans-serif;
+  --num:"Barlow Condensed","Noto Sans SC",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#161412; --wash:#1D1A17; --card:#221F1B; --ink:#F3EEE6; --muted:#A49C90; --line:#35302A;
+    --red:#EF4B3C; --red-soft:#3A1E1A; --yellow:#FFC72C; --yellow-soft:#3A3015; --amber:#FFC72C;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#161412; --wash:#1D1A17; --card:#221F1B; --ink:#F3EEE6; --muted:#A49C90; --line:#35302A;
+  --red:#EF4B3C; --red-soft:#3A1E1A; --yellow:#FFC72C; --yellow-soft:#3A3015; --amber:#FFC72C;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.7 var(--body)}
+.wrap{max-width:1100px;margin:0 auto;padding:0 20px}
+a{color:inherit}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2.5px solid var(--red);outline-offset:2px;border-radius:6px}
+code,.mono{font-family:var(--mono)}
+
+.bar{display:flex;align-items:center;justify-content:space-between;padding:18px 0;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700}
+.tag{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:2px 10px;white-space:nowrap}
+
+/* hero */
+.hero{display:grid;grid-template-columns:.95fr 1.05fr;gap:44px;align-items:start;padding:30px 0 60px}
+.eyebrow{font-size:13px;color:var(--red);font-weight:700;letter-spacing:.06em}
+h1{font:400 clamp(32px,4.4vw,50px)/1.2 var(--display);margin:10px 0 18px}
+h1 em{font-style:normal;background:linear-gradient(transparent 58%,var(--yellow) 58%);padding:0 2px}
+.lede{color:var(--muted);margin:0 0 20px;max-width:31em}
+.where{font-size:13px;color:var(--muted);border-left:3px solid var(--yellow);padding:2px 0 2px 12px;margin:0}
+.where b{color:var(--ink)}
+
+/* chat window: the signature */
+.win{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:0 1px 0 var(--line),0 24px 48px -28px rgba(39,37,31,.35);overflow:hidden}
+.win-top{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--wash);font-size:12px;color:var(--muted)}
+.dots{display:flex;gap:5px}.dots i{width:9px;height:9px;border-radius:50%;background:var(--line)}
+.conn{margin-left:auto;display:flex;align-items:center;gap:6px}
+.conn::before{content:"";width:7px;height:7px;border-radius:50%;background:#2E9E5B}
+.chat{padding:16px;display:flex;flex-direction:column;gap:10px;min-height:520px}
+.u{align-self:flex-end;max-width:85%;background:var(--ink);color:var(--paper);border-radius:14px 14px 4px 14px;padding:9px 13px;font-size:14px}
+.calls{display:flex;flex-direction:column;gap:5px}
+.call{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:baseline;font-size:12.5px;padding:6px 10px;border-radius:9px;background:var(--wash);opacity:0;transform:translateY(4px);transition:opacity .35s,transform .35s}
+.call.on{opacity:1;transform:none}
+.call code{color:var(--red);font-weight:600;font-size:12px}
+.call span{color:var(--muted);min-width:0}
+.call span b{color:var(--ink);font-weight:500}
+.a{max-width:94%;border:1px solid var(--line);border-radius:14px 14px 14px 4px;padding:12px 14px;font-size:14px;opacity:0;transition:opacity .4s}
+.a.on{opacity:1}
+.a p{margin:0 0 8px}
+.a ul{margin:0 0 8px;padding-left:18px}
+.a .pill{display:inline-block;font-size:12px;background:var(--yellow-soft);border-radius:6px;padding:0 6px;margin-left:4px}
+.a .ask{color:var(--muted);font-size:13px;margin:0}
+.replay{margin:0 16px 14px;border:1px solid var(--line);background:transparent;border-radius:8px;padding:4px 12px;font-size:12px;cursor:pointer;color:var(--muted)}
+
+section{padding:48px 0;border-top:1px solid var(--line)}
+h2{font:400 30px/1.25 var(--display);margin:0 0 6px}
+.sub{color:var(--muted);margin:0 0 22px;max-width:46em}
+
+/* tool trace */
+.trace{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.tool{background:var(--wash);border-radius:14px;padding:14px 16px}
+.tool h3{margin:0;font:600 14px var(--mono);color:var(--red)}
+.tool p{margin:4px 0 8px;font-size:14px}
+.tool details{font-size:12px}
+.tool summary{cursor:pointer;color:var(--muted)}
+.tool pre{margin:8px 0 0;white-space:pre-wrap;word-break:break-all;font:11.5px/1.55 var(--mono);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 10px;max-height:180px;overflow:auto}
+.tool .hl{background:var(--yellow-soft)}
+
+/* try it */
+.day{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.meal{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.meal h3{margin:0;font-size:15px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.src{font-size:12px;font-weight:500;color:var(--muted)}
+.src.mcd{color:var(--red)}
+.lines{list-style:none;margin:0;padding:0;font-size:14px}
+.lines li{display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px dashed var(--line)}
+.lines li:last-child{border-bottom:0}
+.k{font-family:var(--num);font-size:17px;font-weight:600;white-space:nowrap}
+.est{font-size:11px;color:var(--amber);border:1px solid var(--amber);border-radius:4px;padding:0 4px;margin-left:4px;vertical-align:1px;white-space:nowrap}
+.ask-form{display:flex;gap:6px}
+.ask-form input{flex:1;min-width:0;border:1px solid var(--line);background:var(--wash);border-radius:9px;padding:7px 10px;font:inherit;font-size:14px;color:inherit}
+.ask-form button{border:0;border-radius:9px;padding:0 14px;background:var(--red);color:#fff;font-weight:700;cursor:pointer;white-space:nowrap}
+.ask-form button:disabled{opacity:.55;cursor:progress}
+.state{font-size:12px;color:var(--muted);margin:0;min-height:0}
+.state.err{color:var(--red)}
+.state:empty{display:none}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:transparent;border-radius:99px;padding:3px 11px;font-size:13px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--yellow);border-color:var(--yellow);color:#27251F;font-weight:500}
+.total{margin-top:auto;display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+.total .k{color:var(--ink)}
+.gauge{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px}
+.gauge-head{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;font-size:14px}
+.gauge-head .k{font-size:22px}
+.track{display:flex;height:12px;border-radius:99px;overflow:hidden;background:var(--wash);margin:8px 0 6px}
+.track span{height:100%;transition:width .5s ease}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.plan{display:grid;grid-template-columns:1.1fr .9fr;gap:12px;margin-top:12px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.steps{list-style:none;margin:0;padding:0;counter-reset:s}
+.steps li{position:relative;padding:9px 0 9px 32px;border-bottom:1px solid var(--line);font-size:14px}
+.steps li:last-child{border-bottom:0}
+.steps li::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:10px;width:22px;height:22px;border-radius:50%;background:var(--red);color:#fff;font:600 13px/22px var(--num);text-align:center}
+.steps li.start::before{content:"";background:var(--yellow)}
+.why{display:block;color:var(--muted);font-size:13px}
+.swap s{color:var(--muted)}
+.opts{margin-top:12px;font-size:13px;color:var(--muted)}
+.opts b{color:var(--ink);font-weight:500}
+.order h3{margin:0 0 8px;font-size:15px}
+.item{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.item small{display:block;color:var(--red);font-size:12px}
+.sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 8px}
+.sum div{background:var(--wash);border-radius:10px;padding:7px 10px}
+.sum span{display:block;font-size:12px;color:var(--muted)}
+.sum b{font:600 21px/1.2 var(--num)}
+.note{font-size:12px;color:var(--muted);margin:0}
+.warn{background:var(--red-soft);border-radius:10px;padding:8px 12px;font-size:13px;margin:0 0 8px}
+
+/* ratio */
+.ratio{display:grid;grid-template-columns:.85fr 1.15fr;gap:12px;align-items:start}
+.formula{font:400 24px/1.5 var(--display)}
+.formula p{font:14px/1.7 var(--body);color:var(--muted);margin:10px 0 0}
+.insight{margin-top:12px;background:var(--yellow-soft);border-radius:12px;padding:12px 14px;font:14px/1.7 var(--body)}
+.rows{display:flex;flex-direction:column;gap:7px}
+.row{display:grid;grid-template-columns:7.2em 1fr 3.4em 6em;gap:10px;align-items:center;font-size:14px}
+.row .nm small{display:block;font-size:11px;color:var(--muted);line-height:1.3}
+.rbar{height:10px;background:var(--wash);border-radius:99px;overflow:hidden}
+.rbar span{display:block;height:100%;border-radius:99px;background:var(--yellow);transition:width .4s ease}
+.row.low .rbar span{background:var(--red)}
+.love{display:flex;align-items:center;gap:4px;justify-content:flex-end}
+.love button{width:24px;height:24px;border-radius:7px;border:1px solid var(--line);background:transparent;cursor:pointer;line-height:1}
+.love output{font:600 16px var(--num);width:2.2em;text-align:center}
+.src-note{font-size:12px;color:var(--muted);margin:10px 0 0}
+
+.dlc{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.who{background:var(--wash);border-radius:14px;padding:14px 16px;font-size:14px}
+.badge{display:inline-block;font:500 12px var(--body);background:var(--yellow);color:#27251F;border-radius:6px;padding:1px 8px;margin-left:6px;vertical-align:4px}
+
+footer{border-top:1px solid var(--line);padding:22px 0 48px;font-size:12px;color:var(--muted)}
+
+@media (max-width:880px){
+  .hero,.plan,.ratio,.trace{grid-template-columns:1fr}
+  .day,.dlc{grid-template-columns:1fr}
+  .hero{gap:28px;padding-top:10px}
+  .chat{min-height:0}
+}
+@media (max-width:420px){
+  .wrap{padding:0 16px}
+  .row{grid-template-columns:6.4em 1fr 3em 5.6em;gap:6px}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="bar">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="1" y="1" width="28" height="28" rx="8" fill="var(--yellow)"/><g fill="#DA291C"><rect x="8" y="6" width="3" height="11" rx="1.2"/><rect x="12.5" y="4.5" width="3" height="12" rx="1.2"/><rect x="17" y="6" width="3" height="11" rx="1.2"/><path d="M6.5 14h15l-2 10.5h-11z"/></g></svg>
+      麦麦热量管家
+    </div>
+    <span class="tag">演示 · 非麦当劳官方</span>
+  </header>
+
+  <div class="hero">
+    <div>
+      <div class="eyebrow">一个装进 AI 里的麦当劳 Skill</div>
+      <h1>减脂不是少吃你爱的，<br>是先换掉<em>不值这口热量</em>的。</h1>
+      <p class="lede">你在 AI 里说今天吃了什么，它通过麦当劳 MCP 查官方营养、门店菜单和套餐换配，按你的口味和剩下的热量把麦当劳这一顿排好，核完价等你一句"下单"。</p>
+      <p class="where">在 <b>WorkBuddy</b>、<b>Claude</b>、<b>Cursor</b> 等支持 MCP 的 AI 里使用。右边是它工作时的样子，下面每一步都能看到麦当劳 MCP 的真实返回。</p>
+    </div>
+
+    <div class="win" aria-label="AI 对话演示">
+      <div class="win-top"><span class="dots"><i></i><i></i><i></i></span>AI 助手 · 麦麦热量管家<span class="conn">已连接 mcd-mcp</span></div>
+      <div class="chat" id="chat">
+        <div class="u">中午吃了食堂黄焖鸡米饭，还喝了杯半糖奶茶。晚上想吃麦当劳，帮我安排一下</div>
+        <div class="calls" id="calls"></div>
+        <div class="a" id="answer">
+          <p>今天目标 1800 大卡：早餐 402（麦当劳，已记录），午餐约 950（估算），<b>晚餐还剩 448 大卡</b>。</p>
+          <p>你的老样子巨无霸三件套（949 大卡）放不下，我按味热比代价从小到大换：</p>
+          <ul>
+            <li>可乐 → 纯牛奶：少 18 大卡，多 7g 蛋白质</li>
+            <li>巨无霸 → 麦乐鸡 5 块：少 300 大卡，代价 0.17</li>
+            <li>中薯条 → 小杯玉米杯：少 236 大卡，代价 1.36</li>
+          </ul>
+          <p><b>麦乐鸡经典中套餐</b>（小杯玉米杯 + 纯牛奶）<br>395 大卡 · 蛋白质 21g · <b>¥25.0</b>（官方核价）· 福州路餐厅 19:00 到店取</p>
+          <p>也可以：板烧鸡腿堡三件套（玉米杯 + 无糖可乐<span class="pill">去冰 · 你说过一次</span>）444 大卡 · ¥34.0</p>
+          <p class="ask">回复"下单"我就提交订单，付款在麦当劳官方页面完成。</p>
+        </div>
+      </div>
+      <button class="replay" id="replay">重播</button>
+    </div>
+  </div>
+
+  <section aria-labelledby="t-trace">
+    <h2 id="t-trace">每一步都是真实调用</h2>
+    <p class="sub">数字不是 AI 编的。热量来自官方营养数据，价格来自官方计价接口。下面是这次演示里用到的麦当劳 MCP 工具，以及它们 2026-10-12 至 13 日的真实返回（节选，已脱敏）。</p>
+    <div class="trace">
+      <div class="tool"><h3>list-nutrition-foods</h3><p>官方营养表，共 160 种餐品，用来算每样的热量和蛋白质。</p>
+        <details><summary>看真实返回</summary><pre>[160]{productName,nutritionDescription,energyKj,energyKcal,protein,fat,carbohydrate,sodium,calcium}:
+  麦乐鸡5块,null,890,<span class="hl">213</span>,12,12,13,422,9
+  中薯条,null,1210,<span class="hl">289</span>,4,12,38,165,18
+  巨无霸,null,2146,<span class="hl">513</span>,27,26,42,961,171
+  板烧鸡腿堡,null,1638,<span class="hl">391</span>,23,17,35,1041,93
+  小杯玉米杯,null,223,<span class="hl">53</span>,2,1,7,1,6
+  可乐中杯,null,616,<span class="hl">147</span>,0,0,36,0,10
+  无糖可口可乐中杯,null,0,<span class="hl">0</span>,0,0,1,35,0
+  纯牛奶（盒装）,null,541,<span class="hl">129</span>,7,7,10,73,231</pre></details></div>
+      <div class="tool"><h3>query-nearby-stores</h3><p>找附近能到店取餐的门店，以及能预约的时段。</p>
+        <details><summary>看真实返回</summary><pre>{"storeCode":"1450441","storeName":"<span class="hl">麦当劳上海福州路餐厅</span>",
+ "address":"福州路666号","distance":235,
+ "businessStartTime":"06:30","businessEndTime":"23:00",
+ "reservation":true, ... "夜市(17:14至21:45)" ...}</pre></details></div>
+      <div class="tool"><h3>query-meals</h3><p>这家店现在在卖什么、多少钱，拿到套餐的商品编码。</p>
+        <details><summary>看真实返回</summary><pre>"9900005466":{"name":"巨无霸三件套","currentPrice":"<span class="hl">36.5</span>","originalPrice":"49"}
+"9900005462":{"name":"板烧鸡腿堡三件套","currentPrice":"<span class="hl">34.5</span>","originalPrice":"47"}
+"9900004835":{"name":"麦乐鸡套餐","currentPrice":"<span class="hl">25</span>","originalPrice":"37.5"}</pre></details></div>
+      <div class="tool"><h3>query-meal-detail</h3><p>套餐里能换什么、换了加多少钱。薯条换玉米杯、可乐换无糖，都在这里查。</p>
+        <details><summary>看真实返回</summary><pre>{"name":"选择套餐内小食","choices":[
+  {"code":"4810","name":"中薯条","diffPrice":"+ ¥0"},
+  {"code":"4437","name":"小杯玉米杯","diffPrice":"<span class="hl">- ¥0.5</span>"}, ...]}
+{"name":"选择套餐内饮料","choices":[
+  {"code":"3050","name":"可乐中杯","diffPrice":"+ ¥0"},
+  {"code":"3071","name":"无糖可口可乐中杯","diffPrice":"<span class="hl">+ ¥0</span>"}, ...]}</pre></details></div>
+      <div class="tool"><h3>calculate-price</h3><p>按换好的配法让官方算价。注意返回单位是"分"，2500 分就是 ¥25.0，和引擎的估算一致。</p>
+        <details><summary>看真实返回</summary><pre>{"productList":[{"productCode":"9900004835",
+  "productName":"麦乐鸡经典中套餐","quantity":1,
+  "originalSubtotal":2500,"subtotal":2500}],
+ "price":<span class="hl">2500</span>,
+ "takeWayList":[{"code":"eat-in","title":"堂食"},{"code":"take-in-store","title":"外带"}]}</pre></details></div>
+      <div class="tool"><h3>create-order</h3><p>只有你回复"下单"之后才会调用，返回订单号和支付链接。演示里不会调用。</p>
+        <details><summary>它需要的参数</summary><pre>storeCode · orderType=1 · beType=1
+takeWayCode（来自 calculate-price 的 takeWayList）
+reservationDate · items[roundList]</pre></details></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="t-try">
+    <h2 id="t-try">换个午饭试试</h2>
+    <p class="sub">目标 1800 大卡、蛋白质 90g，老样子是巨无霸三件套。午饭随便写一句，晚餐方案会跟着变。这里的排餐算法和 Skill 里的计算脚本是同一套，菜单、换配和营养都来自上海福州路餐厅的真实录制数据。</p>
+    <div class="day">
+      <article class="meal">
+        <h3>早餐 08:12 <span class="src mcd">麦当劳 · 自动记录</span></h3>
+        <ul class="lines"><li><span>猪柳蛋麦满分</span><span class="k">387</span></li><li><span>小杯鲜萃咖啡</span><span class="k">15</span></li></ul>
+        <div class="total"><span>蛋白质 24g</span><span class="k">402 大卡</span></div>
+      </article>
+      <article class="meal">
+        <h3>午餐 <span class="src">不是麦当劳 · 随便说</span></h3>
+        <form class="ask-form" id="lunchForm">
+          <input id="lunchInput" maxlength="200" autocomplete="off" placeholder="比如：两个肉包加一杯豆浆" aria-label="午饭吃了什么">
+          <button type="submit" id="lunchBtn">估算</button>
+        </form>
+        <div class="chips" id="chips" role="group" aria-label="午饭示例"></div>
+        <p class="state" id="state" role="status"></p>
+        <ul class="lines" id="lunchLines"></ul>
+        <p class="note" id="lunchNote"></p>
+        <div class="total"><span id="lunchP"></span><span class="k" id="lunchK"></span></div>
+      </article>
+      <article class="meal">
+        <h3>晚餐 19:00 <span class="src mcd">麦当劳 · 待你确认</span></h3>
+        <ul class="lines" id="dinnerLines"></ul>
+        <div class="total"><span id="dinnerP"></span><span class="k" id="dinnerK"></span></div>
+      </article>
+    </div>
+    <div class="gauge">
+      <div class="gauge-head"><span>今天还剩</span><span><span class="k" id="left"></span> 大卡留给晚餐</span></div>
+      <div class="track" aria-hidden="true"><span id="gB" style="background:var(--red)"></span><span id="gL" style="background:var(--yellow)"></span><span id="gD" style="background:var(--ink)"></span></div>
+      <div class="legend"><span><i style="background:var(--red)"></i>早餐</span><span><i style="background:var(--yellow)"></i>午餐（估算）</span><span><i style="background:var(--ink)"></i>晚餐方案</span></div>
+    </div>
+    <div class="plan">
+      <div class="panel"><ol class="steps" id="steps"></ol><div id="opts"></div></div>
+      <div class="panel order">
+        <h3>福州路餐厅 · 19:00 到店取</h3>
+        <div id="warn"></div>
+        <div id="items"></div>
+        <div class="sum"><div><span>热量</span><b id="sK"></b></div><div><span>蛋白质</span><b id="sP"></b></div><div><span>价格</span><b id="sY"></b></div></div>
+        <p class="note">价格 = 菜单现价 + 换配差价，和 <code>calculate-price</code> 实测一致；正式使用时每单都会再核一次。非麦当劳食物的热量是 AI 估算。</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="t-ratio">
+    <h2 id="t-ratio">味热比</h2>
+    <p class="sub">先用大众口味给每样餐品一个默认的"爱吃程度"，你觉得不对就自己调。调一下，上面的晚餐方案会跟着变。</p>
+    <div class="ratio">
+      <div class="panel formula">味热比 = 爱吃程度 ÷ 每百大卡
+        <p>热量超了要换东西时，看换掉它的代价：少了多少爱吃程度，换来少了多少热量。代价最小的先换。0 大卡的无糖饮料不占热量。</p>
+        <div class="insight" id="insight"></div>
+      </div>
+      <div class="panel">
+        <div class="rows" id="rows"></div>
+        <p class="src-note">默认值来源：<a href="https://www.maigoo.com/top/424487.html" target="_blank" rel="noopener">麦购网"麦当劳十大最受欢迎产品"综合指数</a>（汇总大众点评、美团、饿了么的评价与热销情况，算法未公开，仅作起点），换算成 10 分制。榜单没有的餐品先给中间值 6.0。以后会根据你实际点过的单自动修正。</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="t-dlc">
+    <h2 id="t-dlc">一起吃也行 <span class="badge">DLC</span></h2>
+    <p class="sub">两个人各有口味和目标，还是一张单、一次下单。</p>
+    <div class="dlc">
+      <div class="who"><b>你</b> · 减脂中，今晚剩 448 大卡<br>麦乐鸡经典中套餐，小食换玉米杯，饮料换纯牛奶</div>
+      <div class="who"><b>对象</b> · 不控制，最爱麦辣<br>麦辣鸡腿汉堡三件套，不要生菜（TA 说过一次）</div>
+    </div>
+  </section>
+
+  <footer>非麦当劳官方产品，由参赛者独立开发。餐品营养与价格来自麦当劳 MCP 的真实返回（2026-10-12 至 13 日录制，上海福州路餐厅）；非麦当劳食物热量为 AI 估算；内容仅供参考，不构成营养或医疗建议。</footer>
+</div>
+
+<script>
+// 数据：tools/export_demo_data.py 从录制的真实麦当劳 MCP 返回导出（营养、菜单现价、套餐换配差价）
+// 算法：与 skill/mcd-calorie-butler/scripts/butler.py 的 plan 相同
+const GOAL = 1800, PROTEIN_GOAL = 90, BREAKFAST = {kcal:402, p:24};
+const LUNCH = [
+  {id:"salad",label:"沙拉加鸡胸",say:"中午吃了沙拉，加了份鸡胸肉",lines:[["蔬菜沙拉（油醋汁）",150],["鸡胸肉一份",200]],p:38,note:"按一人份沙拉和约 150g 鸡胸肉估算。"},
+  {id:"noodle",label:"一碗牛肉面",say:"中午一碗牛肉面",lines:[["牛肉面一碗",550]],p:25,note:"按常规大碗牛肉面估算。"},
+  {id:"hmj",label:"黄焖鸡＋奶茶",say:"食堂黄焖鸡米饭，还喝了杯半糖奶茶",lines:[["黄焖鸡米饭（一人份）",700],["半糖奶茶（约 500ml）",250]],p:34,note:"按食堂常规一人份及 500ml 半糖奶茶估算。"},
+  {id:"hotpot",label:"聚餐吃火锅",say:"中午公司聚餐吃了火锅",lines:[["火锅（肉菜 + 蘸料）",1100],["米饭一碗",200]],p:55,note:"按聚餐一人份估算，锅底和蘸料差别很大。"},
+];
+// 演示用户说过的口味：去酸黄瓜、饮料去冰
+const ICED = /可乐|雪碧|红茶|怡泉|美汁源/;
+let D = null, lunch = LUNCH[2];
+const $ = id => document.getElementById(id);
+const f1 = n => (Math.round(n*10)/10).toFixed(1);
+const love = k => k && D.loves[k] ? D.loves[k].love : 6.0;
+const ratio = k => D.loves[k].kcal ? D.loves[k].love / (D.loves[k].kcal/100) : Infinity;
+const tagOf = o => o.name === "巨无霸" ? "去酸黄瓜 · 你说过一次" : ICED.test(o.name) ? "去冰 · 你说过一次" : "";
+
+function summarize(combo, choice){
+  const items = combo.rounds.map((r,i)=>r.options[choice[i]]);
+  const known = items.every(o=>o.kcal!==null && o.kcal!==undefined);
+  return {combo, choice, items,
+    kcal: known ? items.reduce((s,o)=>s+o.kcal,0) : null,
+    protein: known ? items.reduce((s,o)=>s+o.protein,0) : null,
+    love: items.reduce((s,o)=>s+love(o.key),0),
+    price: Math.round((combo.price + items.reduce((s,o)=>s+o.diff,0))*100)/100,
+    disliked: items.some(o=>love(o.key)<=0)};
+}
+function* choices(combo, i=0, acc=[]){
+  if (i===combo.rounds.length){ yield acc.slice(); return; }
+  for (let j=0;j<combo.rounds[i].options.length;j++){ acc.push(j); yield* choices(combo,i+1,acc); acc.pop(); }
+}
+const changes = (base,c) => base.items.filter((x,i)=>!c.items[i] || c.items[i].code!==x.code).length;
+const score = (c,base,gap) => c.love + Math.min(c.protein,gap)/10 - 0.3*changes(base,c) - 0.002*c.kcal - 0.08*c.price;
+
+function plan(budget, gap){
+  const bc = D.combos.find(c=>c.code===D.base);
+  const base = summarize(bc, bc.rounds.map(r=>Math.max(0,r.options.findIndex(o=>o.default))));
+  const ranked = [];
+  for (const c of D.combos) for (const ch of choices(c)){
+    const s = summarize(c, ch);
+    if (s.kcal===null || s.disliked || s.kcal>budget) continue;
+    ranked.push([score(s,base,gap), s]);
+  }
+  ranked.sort((a,b)=>b[0]-a[0] || a[1].price-b[1].price);
+  if (!ranked.length){
+    const singles = D.singles.filter(x=>x.kcal<=budget && love(x.key)>0)
+      .sort((a,b)=>love(b.key)-love(a.key) || b.protein-a.protein || a.price-b.price).slice(0,3);
+    return {base, best:null, singles};
+  }
+  const best = base.kcal<=budget ? base : ranked[0][1];
+  const steps = best===base ? [] : base.items.map((x,i)=>[x,best.items[i]]).filter(([x,y])=>x.code!==y.code).map(([x,y])=>{
+    const saved = x.kcal-y.kcal, lost = love(x.key)-love(y.key);
+    return {from:x.name, to:y.name, saved, dp:y.protein-x.protein, cost: saved>0 ? lost/(saved/100) : null};
+  }).sort((a,b)=>(a.cost ?? 99)-(b.cost ?? 99));
+  const others = [], seen = new Set([best.combo.code]);
+  for (const [,c] of ranked){ if (!seen.has(c.combo.code)){ seen.add(c.combo.code); others.push(c); } if (others.length===2) break; }
+  return {base, best, steps, others};
+}
+
+function render(){
+  const lk = lunch.lines.reduce((s,l)=>s+l[1],0), left = GOAL - BREAKFAST.kcal - lk;
+  const gap = Math.max(0, PROTEIN_GOAL - BREAKFAST.p - lunch.p);
+  const r = plan(Math.max(left,0), gap);
+  $("lunchLines").innerHTML = lunch.lines.map(l=>`<li><span>${l[0]}<span class="est">估算</span></span><span class="k">${l[1]}</span></li>`).join("");
+  $("lunchK").textContent = lk + " 大卡"; $("lunchP").textContent = "蛋白质约 " + lunch.p + "g";
+  $("lunchNote").textContent = lunch.note ? (lunch.by==="model" ? "大模型估算：" : "示例估算：") + lunch.note : "";
+  $("left").textContent = Math.max(left,0);
+  const pct = n => Math.max(0,n)/GOAL*100 + "%";
+  $("gB").style.width = pct(BREAKFAST.kcal); $("gL").style.width = pct(Math.min(lk, GOAL-BREAKFAST.kcal));
+  $("gD").style.width = pct(Math.min(r.best ? r.best.kcal : 0, Math.max(left,0)));
+  const fits = r.best===r.base;
+  const start = `<li class="start"><span class="swap">老样子：${r.base.combo.name} · ${r.base.kcal} 大卡</span><span class="why">${fits?"今晚剩 "+left+" 大卡，放得下，一样都不用换。":"今晚剩 "+Math.max(left,0)+" 大卡，放不下，按味热比代价从小到大换："}</span></li>`;
+  if (!r.best){
+    $("steps").innerHTML = start; $("opts").innerHTML = "";
+    $("dinnerLines").innerHTML = r.singles.map(x=>`<li><span>${x.name}（单点）</span><span class="k">${x.kcal}</span></li>`).join("") || "<li><span>这顿放不下麦当劳了</span><span></span></li>";
+    $("dinnerK").textContent = ""; $("dinnerP").textContent = "";
+    $("warn").innerHTML = `<p class="warn">只剩 ${Math.max(left,0)} 大卡，套餐怎么换都放不下。${r.singles.length?"可以单点一样小的。":""}不建议靠饿一顿来抵消，想吃就按最轻的来，明天再调整。</p>`;
+    $("items").innerHTML = r.singles.map(x=>`<div class="item"><span>${x.name}<small>味热比 ${f1(ratio(x.key))}</small></span><span class="k">${x.kcal} 大卡 · ¥${x.price.toFixed(1)}</span></div>`).join("");
+    $("sK").textContent = "—"; $("sP").textContent = "—"; $("sY").textContent = "—";
+    return renderRatio();
+  }
+  const b = r.best;
+  $("steps").innerHTML = start + r.steps.map(x=>`<li><span class="swap"><s>${x.from}</s> → ${x.to}，少 ${x.saved} 大卡${x.dp>0?`，多 ${x.dp}g 蛋白质`:""}</span><span class="why">${x.cost===null?"热量没少，换来更多蛋白质。":x.cost<=0.05?"代价 0：几乎不损失口味。":`代价 ${f1(x.cost)}：每少吃 100 大卡，爱吃程度降 ${f1(x.cost)}。`}</span></li>`).join("");
+  $("opts").innerHTML = r.others.length ? `<p class="opts">也可以：${r.others.map(o=>`<b>${o.combo.name}</b>（${o.items.slice(1).map(i=>i.name).join(" + ")}）${o.kcal} 大卡 · ¥${o.price.toFixed(1)}`).join("；")}</p>` : "";
+  $("dinnerLines").innerHTML = b.items.map(o=>`<li><span>${o.name}</span><span class="k">${o.kcal}</span></li>`).join("");
+  $("dinnerK").textContent = b.kcal + " 大卡"; $("dinnerP").textContent = "蛋白质 " + Math.round(b.protein) + "g";
+  $("warn").innerHTML = "";
+  $("items").innerHTML = `<div class="item"><b>${b.combo.name}</b><span></span></div>` + b.items.map(o=>{const t=tagOf(o);return `<div class="item"><span>${o.name}${t?`<small>${t}</small>`:""}</span><span class="k">${o.kcal} 大卡</span></div>`;}).join("");
+  $("sK").textContent = b.kcal; $("sP").textContent = Math.round(b.protein) + "g"; $("sY").textContent = "¥" + b.price.toFixed(1);
+  renderRatio();
+}
+
+function renderRatio(){
+  const keys = D.ratioRows.filter(k=>D.loves[k]).sort((a,b)=>ratio(b)-ratio(a));
+  const max = ratio(keys[0]);
+  const known = keys.filter(k=>D.loves[k].src==="大众口味"), top = known[0], low = known[known.length-1];
+  $("rows").innerHTML = keys.map(k=>{const L=D.loves[k];return `<div class="row ${k===low?"low":""}"><span class="nm">${k}<small>${L.kcal} 大卡 · ${L.src}</small></span><span class="rbar"><span style="width:${ratio(k)/max*100}%"></span></span><span class="k">${f1(ratio(k))}</span><span class="love"><button aria-label="降低${k}的爱吃程度" data-k="${k}" data-d="-0.5">−</button><output>${f1(L.love)}</output><button aria-label="提高${k}的爱吃程度" data-k="${k}" data-d="0.5">+</button></span></div>`;}).join("");
+  $("insight").innerHTML = `在有大众口味数据的餐品里，<b>${top}</b>最值这口热量（${f1(ratio(top))}），<b>${low}</b>最不值（${f1(ratio(low))}）。`;
+}
+
+function play(){
+  const CALLS = [
+    ["now-time-info","<b>2026-10-13 周二 18:40</b>，晚餐时段"],
+    ["list-nutrition-foods","官方营养表 <b>160</b> 种餐品"],
+    ["query-nearby-stores","<b>福州路餐厅</b> · 235 米 · 可预约 19:00"],
+    ["query-meals","巨无霸三件套 <b>¥36.5</b> · 麦乐鸡套餐 <b>¥25</b>"],
+    ["query-meal-detail","5 个候选套餐的换配：小食换玉米杯 <b>−¥0.5</b> · 换纯牛奶 <b>+¥0.5</b>"],
+    ["calculate-price","price: <b>2500</b>（单位：分）= ¥25.0"],
+  ];
+  const box = $("calls"), ans = $("answer");
+  box.innerHTML = CALLS.map(c=>`<div class="call"><code>${c[0]}</code><span>${c[1]}</span></div>`).join("");
+  ans.classList.remove("on");
+  const els = [...box.children];
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches){ els.forEach(e=>e.classList.add("on")); ans.classList.add("on"); return; }
+  els.forEach((e,i)=>setTimeout(()=>e.classList.add("on"), 350 + i*420));
+  setTimeout(()=>ans.classList.add("on"), 350 + els.length*420 + 200);
+}
+
+let apiOk = true;
+function setState(msg, err){ const el=$("state"); el.textContent=msg; el.classList.toggle("err", !!err); }
+async function estimate(text, preset){
+  text = text.trim();
+  if (!text){ setState("先写一句你吃了什么", true); return; }
+  if (!apiOk && preset){ lunch = preset; setState("演示站没连大模型，这是预置的示例估算。"); render(); return; }
+  $("lunchBtn").disabled = true; setState("大模型估算中…");
+  try {
+    const r = await fetch("api/estimate", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({text})});
+    const d = await r.json().catch(()=>({error:"服务没有返回结果"}));
+    if (!r.ok) throw Object.assign(new Error(d.error || "估算失败"), {status:r.status});
+    if (!d.items.length){ setState(d.note || "没认出食物，换个说法试试", true); return; }
+    lunch = {say:text, lines:d.items.map(i=>[i.name,i.kcal]), p:d.items.reduce((s,i)=>s+i.protein,0), note:d.note, by:"model"};
+    setState(""); render();
+  } catch(e){
+    if (!e.status || [404,405,501,503].includes(e.status)){ apiOk = false;
+      if (preset){ lunch = preset; setState("演示站没连大模型，这是预置的示例估算。"); render(); }
+      else setState("演示站没连大模型。装上 Skill 后由你的 AI 来估算，这里可以先点下面的例子。", true);
+    } else setState(e.message, true);
+  } finally { $("lunchBtn").disabled = false; }
+}
+
+async function init(){
+  D = await (await fetch("demo-data.json")).json();
+  $("chips").innerHTML = LUNCH.map(l=>`<button type="button" class="chip" data-id="${l.id}">${l.label}</button>`).join("");
+  $("chips").addEventListener("click", e=>{
+    const b = e.target.closest(".chip"); if(!b) return;
+    const l = LUNCH.find(x=>x.id===b.dataset.id); $("lunchInput").value = l.say; estimate(l.say, l);
+  });
+  $("lunchForm").addEventListener("submit", e=>{ e.preventDefault(); estimate($("lunchInput").value); });
+  $("rows").addEventListener("click", e=>{
+    const b = e.target.closest("button[data-k]"); if(!b) return;
+    const L = D.loves[b.dataset.k]; L.love = Math.min(10, Math.max(0, L.love + Number(b.dataset.d)));
+    render();
+  });
+  $("replay").addEventListener("click", play);
+  $("lunchInput").value = lunch.say;
+  render();
+}
+play(); init();
+</script>
+</body>
+</html>
