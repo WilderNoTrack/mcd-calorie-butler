@@ -63,9 +63,23 @@ class ButlerTest(unittest.TestCase):
 
     def test_budget_splits_across_open_meals(self):
         run("log", "add", "--meal", "breakfast", "--source", "other", "--items", '[{"name":"包子","kcal":400,"protein":12}]')
-        _, out = run("today")
+        _, out = run("today", "--now", "09:00")
         self.assertEqual(out["remaining_kcal"], 1400)
         self.assertEqual(out["meal_budgets"], {"lunch": 800, "dinner": 600})
+
+    def test_past_unlogged_meal_gets_no_budget(self):
+        # WorkBuddy 实测发现：11 点才建档、早餐没记，原来会给早餐留 30% 预算
+        _, out = run("today", "--now", "11:04")
+        self.assertEqual(out["meal_budgets"], {"lunch": 1029, "dinner": 771})
+        self.assertEqual(out["unlogged_past_meals"], ["早餐"])
+        self.assertTrue(out["notes"])
+        run("log", "add", "--meal", "lunch", "--source", "other", "--items", '[{"name":"盖饭","kcal":1020,"protein":30}]')
+        _, out = run("today", "--now", "18:40")
+        self.assertEqual(out["meal_budgets"], {"dinner": 780})     # 不再和早餐对半分
+
+    def test_now_must_be_hhmm(self):
+        code, out = run("today", "--now", "晚上")
+        self.assertEqual(code, 2)
 
     def test_usual_order_kept_when_it_fits(self):
         out = self.plan(1100)

@@ -26,6 +26,8 @@
 | `query-order` | 用户付款后查订单状态 | 读 |
 | `order-list` | （可选）从历史订单学口味、找"老样子" | 读 |
 
+`scripts/mcd_fetch.py` 可以直连上表中的只读工具把返回落盘；`create-order` 只能经 MCP 连接器在用户确认后调用。
+
 不调用：`auto-bind-coupons`、`draw-lottery`、`mall-create-order`、`cancel-order`、`delivery-create-address` 等其他写操作，除非用户明确要求。
 
 ## 调用流程
@@ -69,4 +71,8 @@
 
 这些返回（已去掉 traceId，不含任何账户数据）保存在 [tests/fixtures](tests/fixtures)，离线测试和演示页都用它们。重新录制：`python tools/record_fixtures.py --time "yyyy-MM-dd HH:mm"`（只调用只读工具）。
 
-开发过程中没有调用 `create-order`，没有产生任何订单。
+### 在 WorkBuddy 里的真机联调（2026-10-13）
+
+在腾讯 WorkBuddy 中安装本 Skill、配置 mcd-mcp 连接器后实测：`tools/list` 返回 35 个工具；上海福州路餐厅 `query-meals` 返回 119 个餐品；以麦辣鸡腿汉堡三件套为老样子、晚餐预算 393 大卡时，脚本排出麦香鱼中套餐（小杯玉米杯 + 无糖可乐）378 大卡，估算 ¥33.0，`calculate-price` 官方核价 ¥33.0，一致。联调中发现的两个问题已修复：没记录的早餐过了时间仍占预算；长返回需要手抄进文件（新增 `scripts/mcd_fetch.py`）。过程见 [workbuddy.md](workbuddy.md)。
+
+开发与联调过程中没有调用 `create-order`，没有产生任何订单。

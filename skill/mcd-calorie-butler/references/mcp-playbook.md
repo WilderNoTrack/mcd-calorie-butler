@@ -16,6 +16,10 @@
 | `query-order` | 用户付款后查状态 | `orderId` | |
 | `order-list` | 学口味（可选） | 无 | 只返回近期到店/外送订单，可能为空，空就用大众默认值 |
 
+## 取数落盘
+
+`scripts/mcd_fetch.py <工具名> <输出文件> ['{参数}']` 直连 `mcp.mcd.cn`，把返回原样写进文件。只允许只读工具。Token 读取顺序：环境变量 `MCD_MCP_TOKEN` → `~/.workbuddy/mcp.json` 里 mcd-mcp 的 `Authorization`。这个脚本来自 WorkBuddy 实测时的做法：营养表、菜单返回动辄几万字，让模型手抄进文件既慢又容易错。
+
 ## 套餐的 items 怎么传
 
 脚本的 `plan.calculate_price_items` 已经拼好，直接用。格式：

@@ -15,6 +15,7 @@ import json
 import os
 import re
 import sys
+import time
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -22,6 +23,7 @@ PUBLIC_LOVE = HERE.parent / "data" / "public_love.json"
 MAIN_MEALS = ("breakfast", "lunch", "dinner")
 MEAL_NAMES = {"breakfast": "早餐", "lunch": "午餐", "dinner": "晚餐", "snack": "加餐"}
 DEFAULT_SPLIT = {"breakfast": 0.30, "lunch": 0.40, "dinner": 0.30}
+MEAL_ENDS = {"breakfast": "10:30", "lunch": "14:30", "dinner": "23:59"}  # 过了这个时间还没记的一餐，不再给它留预算
 ALIASES = {"纯牛奶": "纯牛奶（盒装）", "无糖可乐中杯": "无糖可口可乐中杯", "无糖可乐大杯": "无糖可口可乐大杯",
            "无糖可乐小杯": "无糖可口可乐小杯", "麦辣鸡翅2块": "麦辣鸡翅-2块", "100%苹果汁(盒装)": "100%苹果汁"}
 
@@ -49,7 +51,14 @@ def write_json(path: Path, data) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
-    tmp.replace(path)
+    for attempt in range(5):  # Windows 上文件偶尔被别的进程短暂占用
+        try:
+            tmp.replace(path)
+            return
+        except PermissionError:
+            if attempt == 4:
+                raise
+            time.sleep(0.2)
 
 
 def load_profile() -> dict:
@@ -91,6 +100,10 @@ def mcp_payload(text: str):
         obj, _ = json.JSONDecoder().raw_decode(text[start:])
     except json.JSONDecodeError:
         return None
+    if isinstance(obj, dict) and "success" not in obj and isinstance(obj.get("result"), dict):
+        # 整个 JSON-RPC 响应：取出 result.content 里的文本再解析
+        inner = "".join(c.get("text", "") for c in obj["result"].get("content", []) if isinstance(c, dict))
+        return mcp_payload(inner) if inner else None
     if isinstance(obj, dict) and obj.get("success") is False:
         raise ButlerError(f"麦当劳 MCP 返回失败：code={obj.get('code')} {obj.get('message')}")
     return obj
@@ -105,7 +118,9 @@ def read_source(path: str) -> str:
 def parse_nutrition(text: str) -> dict:
     """解析 list-nutrition-foods：data 是 `[160]{productName,...}:` 加逐行 CSV。"""
     obj = mcp_payload(text)
-    table = obj["data"] if obj else text
+    table = obj.get("data") if isinstance(obj, dict) else text
+    if not isinstance(table, str):
+        raise ButlerError("看不懂这份营养数据：应来自 list-nutrition-foods 的返回")
     lines = [l.strip() for l in table.splitlines() if l.strip()]
     if not lines or not lines[0].startswith("["):
         raise ButlerError("看不懂这份营养数据：应来自 list-nutrition-foods 的返回")
@@ -428,7 +443,16 @@ def render_config(c: dict, tastes: list) -> dict:
 
 # ---------------------------------------------------------------- 预算
 
-def day_summary(profile: dict, date: str) -> dict:
+def now_hhmm(value=None) -> str:
+    if value:
+        if not re.fullmatch(r"\d{1,2}:\d{2}", value):
+            raise ButlerError("--now 的格式是 HH:MM，例如 18:40")
+        h, m = value.split(":")
+        return f"{int(h):02d}:{m}"
+    return dt.datetime.now().strftime("%H:%M")
+
+
+def day_summary(profile: dict, date: str, now: str = None) -> dict:
     diary = read_json(diary_path(date), {"date": date, "meals": []})
     eaten = {m: {"kcal": 0, "protein": 0.0, "entries": 0} for m in list(MAIN_MEALS) + ["snack"]}
     for e in diary["meals"]:
@@ -439,7 +463,14 @@ def day_summary(profile: dict, date: str) -> dict:
     total = sum(v["kcal"] for v in eaten.values())
     protein = round(sum(v["protein"] for v in eaten.values()), 1)
     remaining = profile["goal_kcal"] - total
-    open_meals = [m for m in MAIN_MEALS if eaten[m]["entries"] == 0]
+    unlogged = [m for m in MAIN_MEALS if eaten[m]["entries"] == 0]
+    if now is not None and date == today_str():
+        passed = [m for m in unlogged if now > MEAL_ENDS[m]]
+    elif now is not None and date < today_str():
+        passed = list(unlogged)
+    else:
+        passed = []
+    open_meals = [m for m in unlogged if m not in passed]
     split = profile.get("split", DEFAULT_SPLIT)
     shares = {m: split.get(m, 0.3) for m in open_meals}
     budgets = {}
@@ -451,6 +482,9 @@ def day_summary(profile: dict, date: str) -> dict:
         "protein_gap_g": round(max(0, profile["protein_g"] - protein), 1),
         "meals": {m: {"name": MEAL_NAMES.get(m, m), **v} for m, v in eaten.items()},
         "open_meals": open_meals, "meal_budgets": budgets, "log": diary["meals"],
+        "unlogged_past_meals": [MEAL_NAMES[m] for m in passed],
+        "notes": ([("、".join(MEAL_NAMES[m] for m in passed)) + "的时间已经过了但没有记录：吃了的话请补记，没吃就不再给它留预算。"]
+                  if passed else []),
     }
 
 
@@ -540,9 +574,9 @@ def cmd_log(a):
         before = len(diary["meals"])
         diary["meals"] = [m for m in diary["meals"] if m["meal"] != a.meal]
         write_json(path, diary)
-        return {"removed": before - len(diary["meals"]), "summary": day_summary(load_profile(), date)}
+        return {"removed": before - len(diary["meals"]), "summary": day_summary(load_profile(), date, now_hhmm(a.now))}
     if a.action == "show":
-        return day_summary(load_profile(), date)
+        return day_summary(load_profile(), date, now_hhmm(a.now))
     try:
         raw = json.loads(a.items)
     except json.JSONDecodeError:
@@ -572,11 +606,11 @@ def cmd_log(a):
     diary["meals"].append({"meal": a.meal, "source": a.source, "items": items, "note": a.note or "",
                            "logged_at": dt.datetime.now().isoformat(timespec="minutes")})
     write_json(path, diary)
-    return {"logged": items, "summary": day_summary(load_profile(), date)}
+    return {"logged": items, "summary": day_summary(load_profile(), date, now_hhmm(a.now))}
 
 
 def cmd_today(a):
-    return day_summary(load_profile(), a.date or today_str())
+    return day_summary(load_profile(), a.date or today_str(), now_hhmm(a.now))
 
 
 def cmd_plan(a):
@@ -589,7 +623,7 @@ def cmd_plan(a):
     combos = [c for c in combos if c.rounds]
     if not combos:
         raise ButlerError("没有可用的套餐详情：先用 query-meal-detail 查几个候选套餐")
-    summary = day_summary(profile, a.date or today_str())
+    summary = day_summary(profile, a.date or today_str(), now_hhmm(a.now))
     if a.budget_kcal is not None:
         budget = a.budget_kcal
     else:
@@ -647,7 +681,7 @@ def cmd_plan(a):
                      + "不建议靠饿一顿来抵消，想吃可以按最轻的来，明天再调整。")
     if budget < 300:
         notes.append(f"这顿只剩 {budget} 大卡，今天已经吃得差不多了。")
-    result["notes"] = notes
+    result["notes"] = summary["notes"] + notes
     result["next"] = "把 plan.calculate_price_items 原样作为 items 传给 calculate-price（返回单位是分），核价后再给用户确认。"
     return result
 
@@ -739,17 +773,20 @@ def build_parser():
     s.add_argument("--source", choices=["mcd", "other"], default="other")
     s.add_argument("--items", default="[]"); s.add_argument("--note"); s.add_argument("--date")
     s.add_argument("--replace", action="store_true", help="覆盖这一餐原来的记录")
+    s.add_argument("--now", help="现在几点（HH:MM），默认取本机时间；用来判断哪几餐已经过了")
     s.set_defaults(fn=cmd_log)
 
     s = sub.add_parser("today", help="今天吃了多少、还剩多少")
-    s.add_argument("--date"); s.set_defaults(fn=cmd_today)
+    s.add_argument("--date"); s.add_argument("--now", help="现在几点（HH:MM），默认取本机时间")
+    s.set_defaults(fn=cmd_today)
 
     s = sub.add_parser("plan", help="按味热比排一顿麦当劳")
     s.add_argument("--meal", choices=list(MAIN_MEALS), required=True)
     s.add_argument("--meals", required=True, help="query-meals 的返回文件")
     s.add_argument("--details", nargs="+", required=True, help="query-meal-detail 的返回文件（可多个）")
     s.add_argument("--budget-kcal", type=int); s.add_argument("--base", help="老样子的套餐编码")
-    s.add_argument("--date"); s.set_defaults(fn=cmd_plan)
+    s.add_argument("--date"); s.add_argument("--now", help="现在几点（HH:MM），默认取本机时间")
+    s.set_defaults(fn=cmd_plan)
 
     s = sub.add_parser("price", help="解析 calculate-price 的返回（分 → 元）")
     s.add_argument("file"); s.set_defaults(fn=cmd_price)
@@ -774,6 +811,10 @@ def main(argv=None) -> int:
         return 0
     except ButlerError as e:
         print(json.dumps({"ok": False, "error": str(e)}, ensure_ascii=False, indent=1))
+        return 2
+    except (KeyError, TypeError, ValueError, OSError) as e:
+        print(json.dumps({"ok": False, "error": f"输入文件不对或格式无法识别（{type(e).__name__}: {e}）。"
+                          "请确认传入的是对应麦当劳 MCP 工具的原始返回。"}, ensure_ascii=False, indent=1))
         return 2
 
 

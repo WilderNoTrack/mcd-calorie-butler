@@ -19,7 +19,14 @@ description: 麦麦热量管家。帮正在控制热量（减脂、维持、增�
 
 运行脚本：`python scripts/butler.py <命令>`（路径相对本 Skill 目录）。所有命令输出 JSON，`ok:false` 时把 `error` 原话转告用户。用户数据只存在本机 `~/.mcd-calorie-butler/`。
 
-麦当劳 MCP 的返回要先原样存成文件再交给脚本（建议放 `~/.mcd-calorie-butler/tmp/`）。也可以用 `-` 从标准输入读。
+麦当劳 MCP 的返回要原样存成文件再交给脚本。营养表、菜单、套餐详情都很长，**推荐用 `scripts/mcd_fetch.py` 直接取数落盘**，不要手抄：
+
+```
+python scripts/mcd_fetch.py list-nutrition-foods ~/.mcd-calorie-butler/tmp/nutrition.txt
+python scripts/mcd_fetch.py query-meals ~/.mcd-calorie-butler/tmp/meals.txt '{"storeCode":"1450441","orderType":1,"beType":1,"reservationDate":"2026-10-13 19:00"}'
+```
+
+它只允许只读工具，Token 从环境变量 `MCD_MCP_TOKEN` 或 WorkBuddy 的 mcd-mcp 连接器配置里读，不会打印出来。下单（`create-order`）不走它，必须由你通过 MCP 连接器、在用户确认后调用。用连接器直接调用只读工具也可以，把返回存成文件即可；脚本也接受整个 JSON-RPC 响应。
 
 ## 第一次使用：建档（两分钟）
 
@@ -40,14 +47,15 @@ description: 麦麦热量管家。帮正在控制热量（减脂、维持、增�
   `log add --meal lunch --source other --items '[{"name":"黄焖鸡米饭（一人份）","kcal":720,"protein":33},{"name":"半糖奶茶（500ml）","kcal":300,"protein":4}]' --note "按食堂一人份估算"`
   回复时把份量假设说出来，比如"按一人份、米饭约 200g 估的，大概 720 大卡"。用户纠正就 `--replace` 重记。
 - 记完用 `today` 告诉用户：今天吃了多少、还剩多少、蛋白质还差多少、下一顿大概能吃多少（`meal_budgets`）。
+- 剩余热量只分给还没过的餐：早餐 10:30、午餐 14:30 之后还没记的，不再留预算，`unlogged_past_meals` 会列出来。这时问一句"早餐吃了吗？吃了我补记"，别默认用户没吃。脚本默认取本机时间；本机时间不可信时，用 `now-time-info` 的时间传 `--now 18:40`。
 
 ## 排一顿麦当劳（核心流程）
 
 1. `now-time-info` 确认现在的日期和餐段。早餐时段（约 10:30 前）菜单不同，要按那个时间查。
-2. `today` 拿到这一顿的预算 `meal_budgets[meal]`。用户说"晚上就吃这一顿了"时，用 `--budget-kcal` 传当天剩余的全部。
+2. `today --now <现在时间>` 拿到这一顿的预算 `meal_budgets[meal]`。用户说"晚上就吃这一顿了"时，用 `--budget-kcal` 传当天剩余的全部。
 3. 用常去门店调用 `query-meals`（未来时间要传 `reservationDate`），存文件。门店不营业会返回 600057，告诉用户并建议换 24 小时门店或预约。
 4. 挑 3～6 个候选套餐调用 `query-meal-detail`，各存一个文件。**老样子必须在里面**，其余挑和用户口味相近的，以及"鸡肉类、鱼类、轻一点的"各一个，给脚本留换的余地。
-5. 运行：`plan --meal dinner --meals meals.txt --details d1.txt d2.txt d3.txt`
+5. 运行：`plan --meal dinner --now 18:40 --meals meals.txt --details d1.txt d2.txt d3.txt`
 6. 把 `plan.calculate_price_items` **原样**作为 `items` 传给 `calculate-price`，同一门店、同一 `orderType`/`beType`/`reservationDate`。返回存文件后 `price 文件`，得到元。核价和脚本的 `price_yuan_estimate` 不一致时，以核价为准。
 7. 按下面的方案卡格式回复，等用户确认。
 

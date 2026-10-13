@@ -84,7 +84,7 @@ python install.py --target claude        # 复制到 ~/.claude/skills/mcd-calori
 ## 不用 Token 先看看
 
 ```bash
-python -m unittest discover -s tests -v   # 12 个离线测试，用录制的真实 MCP 返回
+python -m unittest discover -s tests -v   # 14 个离线测试，用录制的真实 MCP 返回
 python tools/demo_server.py               # 打开 http://127.0.0.1:8765 看交互演示
 ```
 
@@ -139,6 +139,7 @@ skill/mcd-calorie-butler/      Skill 本体（装进 AI 客户端的就是这个
 tests/                         离线测试 + 录制的真实 MCP 返回（tests/fixtures）
 tools/                         录制数据、导出演示数据、本地演示服务
 docs/                          交互演示页
+workbuddy.md                   在腾讯 WorkBuddy 里调研、安装、真机联调的记录
 ```
 
 ## 许可
